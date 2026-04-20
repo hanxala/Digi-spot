@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { useParams } from "next/navigation";
 import { CheckCircle, Shield, ShoppingBag, Heart, ArrowLeft } from "lucide-react";
 import { getProductBySlug } from "@/lib/actions/product.actions";
 import { useCart } from "@/context/CartContext";
@@ -13,8 +14,8 @@ import PriceTag from "@/components/ui/PriceTag";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
-  const resolvedParams = use(params);
+export default function ProductPage() {
+  const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mainImageIdx, setMainImageIdx] = useState(0);
@@ -24,14 +25,14 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
 
   useEffect(() => {
     async function fetchProduct() {
-      const res = await getProductBySlug(resolvedParams.slug);
+      const res = await getProductBySlug(slug);
       if (res.success) {
         setProduct(res.product);
       }
       setLoading(false);
     }
     fetchProduct();
-  }, [resolvedParams.slug]);
+  }, [slug]);
 
   if (loading) {
     return (

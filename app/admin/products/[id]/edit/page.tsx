@@ -1,26 +1,27 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import ProductForm from "@/components/admin/ProductForm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getProductById } from "@/lib/actions/product.actions";
 
-export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function EditProductPage() {
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchProduct() {
-      const res = await getProductById(resolvedParams.id);
+      const res = await getProductById(id);
       if (res.success) {
         setProduct(res.product);
       }
       setLoading(false);
     }
     fetchProduct();
-  }, [resolvedParams.id]);
+  }, [id]);
 
   if (loading) return <div className="py-20 text-muted">Loading product data...</div>;
   if (!product) return <div className="py-20 text-accent">Product not found.</div>;
