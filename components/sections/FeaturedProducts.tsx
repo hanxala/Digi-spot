@@ -1,13 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import ProductCard from "../ui/ProductCard";
-import { products } from "@/data/products";
+import { getProducts } from "@/lib/actions/product.actions";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export default function FeaturedProducts() {
-  const featured = products.filter((p) => p.featured).slice(0, 4);
+  const [featured, setFeatured] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFeatured() {
+      const res = await getProducts({ featured: true });
+      if (res.success && res.products) {
+        const mapped = res.products.slice(0, 4).map((p: any) => ({ ...p, id: p._id }));
+        setFeatured(mapped);
+      }
+      setLoading(false);
+    }
+    fetchFeatured();
+  }, []);
 
   return (
     <section className="py-24 bg-background">
@@ -41,19 +55,27 @@ export default function FeaturedProducts() {
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featured.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-card border border-surface rounded-2xl h-80 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featured.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
