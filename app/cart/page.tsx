@@ -111,9 +111,11 @@ export default function CartPage() {
               <PriceTag price={totalPrice} className="text-2xl text-primary" />
             </div>
             
-            <Button size="lg" className="w-full gap-2 text-lg">
-              Checkout <ArrowRight className="w-5 h-5" />
-            </Button>
+            <Link href="/checkout">
+              <Button size="lg" className="w-full gap-2 text-lg">
+                Checkout <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
             
             <div className="mt-6 flex gap-2 justify-center items-center">
               <Image src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" width={40} height={25} className="opacity-70 grayscale" />

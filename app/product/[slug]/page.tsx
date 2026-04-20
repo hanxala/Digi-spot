@@ -1,11 +1,11 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle, Shield, ShoppingBag, Heart, ArrowLeft, Info } from "lucide-react";
-import { products } from "@/data/products";
+import { CheckCircle, Shield, ShoppingBag, Heart, ArrowLeft } from "lucide-react";
+import { getProductBySlug } from "@/lib/actions/product.actions";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import ConditionBadge from "@/components/ui/ConditionBadge";
@@ -15,22 +15,47 @@ import { cn } from "@/lib/utils";
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
-  const product = products.find((p) => p.slug === resolvedParams.slug);
-  
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [mainImageIdx, setMainImageIdx] = useState(0);
   
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
+  useEffect(() => {
+    async function fetchProduct() {
+      const res = await getProductBySlug(resolvedParams.slug);
+      if (res.success) {
+        setProduct(res.product);
+      }
+      setLoading(false);
+    }
+    fetchProduct();
+  }, [resolvedParams.slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="animate-pulse text-muted">Loading camera details...</div>
+      </div>
+    );
+  }
+
   if (!product) {
     notFound();
   }
 
-  const wishlisted = isInWishlist(product.id);
+  const wishlisted = isInWishlist(product._id);
 
   const toggleWishlist = () => {
-    if (wishlisted) removeFromWishlist(product.id);
-    else addToWishlist(product);
+    const wishlistProduct = { ...product, id: product._id };
+    if (wishlisted) removeFromWishlist(product._id);
+    else addToWishlist(wishlistProduct);
+  };
+
+  const handleAddToCart = () => {
+    const cartProduct = { ...product, id: product._id };
+    addToCart(cartProduct);
   };
 
   return (
@@ -55,7 +80,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            {product.images.map((img, idx) => (
+            {product.images.map((img: string, idx: number) => (
               <button
                 key={idx}
                 onClick={() => setMainImageIdx(idx)}
@@ -126,7 +151,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             <Button
               size="lg"
               className="flex-1 gap-2 text-lg"
-              onClick={() => addToCart(product)}
+              onClick={handleAddToCart}
             >
               <ShoppingBag className="w-5 h-5" /> Add to Cart
             </Button>

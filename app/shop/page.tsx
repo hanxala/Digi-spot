@@ -1,27 +1,41 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import FilterSidebar from "@/components/shop/FilterSidebar";
 import ProductGrid from "@/components/shop/ProductGrid";
-import { products } from "@/data/products";
+import { getProducts } from "@/lib/actions/product.actions";
 import { CameraType, Condition } from "@/types";
 
 function ShopContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const typeParam = searchParams.get("type");
   const conditionParam = searchParams.get("condition");
   const brandParam = searchParams.get("brand");
 
-  // Initialize state based on URL
   const [selectedTypes, setSelectedTypes] = useState<CameraType[]>(
     typeParam ? [typeParam as CameraType] : []
   );
   const [selectedConditions, setSelectedConditions] = useState<Condition[]>(
     conditionParam ? [conditionParam as Condition] : []
   );
+
+  useEffect(() => {
+    async function fetchProducts() {
+      setLoading(true);
+      const res = await getProducts();
+      if (res.success && res.products) {
+        // Map MongoDB _id to id for compatibility with ProductCard
+        const mapped = res.products.map((p: any) => ({ ...p, id: p._id }));
+        setAllProducts(mapped);
+      }
+      setLoading(false);
+    }
+    fetchProducts();
+  }, []);
 
   const handleToggleType = (type: CameraType) => {
     setSelectedTypes((prev) =>
@@ -36,14 +50,14 @@ function ShopContent() {
   };
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+    return allProducts.filter((product) => {
       const matchType = selectedTypes.length === 0 || selectedTypes.includes(product.type);
       const matchCondition = selectedConditions.length === 0 || selectedConditions.includes(product.condition);
       const matchBrand = !brandParam || product.brand.toLowerCase() === brandParam.toLowerCase();
       
       return matchType && matchCondition && matchBrand;
     });
-  }, [selectedTypes, selectedConditions, brandParam]);
+  }, [allProducts, selectedTypes, selectedConditions, brandParam]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -72,9 +86,17 @@ function ShopContent() {
         {/* Main Grid */}
         <div className="flex-1 min-w-0">
           <div className="mb-6 flex justify-between items-center text-sm text-muted">
-            <p>Showing {filteredProducts.length} results</p>
+            <p>{loading ? "Loading..." : `Showing ${filteredProducts.length} results`}</p>
           </div>
-          <ProductGrid products={filteredProducts} />
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-card border border-surface rounded-2xl h-80 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <ProductGrid products={filteredProducts} />
+          )}
         </div>
       </div>
     </div>

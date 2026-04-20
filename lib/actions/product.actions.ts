@@ -73,3 +73,15 @@ export async function deleteProduct(id: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function getProductBySlug(slug: string) {
+  try {
+    await connectToDatabase();
+    const product = await Product.findOne({ slug });
+    if (!product) return { success: false, error: "Product not found" };
+    return { success: true, product: JSON.parse(JSON.stringify(product)) };
+  } catch (error: any) {
+    console.error("Failed to fetch product by slug:", error);
+    return { success: false, error: error.message };
+  }
+}
